@@ -19,9 +19,10 @@ dt_info   <- readr::read_csv(here::here("2023",
   left_join(summarise(dt_prices, 
                       y_coor = max(adj_close) * 1.15, 
                       x_coor = min(date) + 15, 
-                      .by = stock_symbol))
-  # mutate(y_coor = max(dt_prices$adj_close) * 0.95,
-  #        x_coor = min(dt_prices$date) + 15)
+                      .by = stock_symbol)) |>
+  mutate(company = stringr::str_replace(company, 
+                                        "International Business Machines", 
+                                        "IBM"))
 
 colour_palette <- c(
   "AAPL"  = "#A2AAAD",
