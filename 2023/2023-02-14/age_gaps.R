@@ -147,9 +147,10 @@ avg_age_diff <- mean(age_gaps$age_difference)
 #   https://twitter.com/nrennie35/status/1625471525448032260
 
 # plot 1: distribution of age difference throughout years
-p1 <- ggplot(age_gaps, aes(x = release_year, y = age_difference)) +
-  geom_jitter(alpha = 0.7, size = 2, colour = "#8AA29E") +
-  geom_smooth(se = FALSE, colour = "#FF9E99", linewidth = 2) +
+p1 <- age_gaps |> 
+  ggplot(aes(x = release_year, y = age_difference)) +
+  geom_jitter(alpha = 0.5, size = 2.5, colour = "#8AA29E") +
+  geom_smooth(se = FALSE, colour = "#FF9E99", linewidth = 2, method = lm) +
   scale_x_continuous(breaks = seq(1935, 2025, 15)) +
   scale_y_continuous(breaks = seq(0, 50, 5)) +
   labs(title = "Decreasing trend in age gaps throughout time",
@@ -157,67 +158,67 @@ p1 <- ggplot(age_gaps, aes(x = release_year, y = age_difference)) +
 p1
 
 # directors who employ the widest couple's age gap
-p2 <- age_gaps |> 
-  group_by(director) |> 
-  summarise(age_diff_avg = max(age_difference),
-            n = n()) |> 
-  filter(n >= 5) |> 
+p2 <- age_gaps |>
+  group_by(director) |>
+  summarise(age_diff_avg = mean(age_difference),
+            n = n()) |>
+  filter(n >= 5) |>
   mutate(director = paste0("**", director, "**"),
-         director = forcats::fct_reorder(director, age_diff_avg)) |> 
-  arrange(desc(age_diff_avg)) |> 
-  head(10) |> 
+         director = forcats::fct_reorder(director, age_diff_avg),
+         label = scales::number(age_diff_avg, accuracy = 1e-1)) |>
+  arrange(desc(age_diff_avg)) |>
+  head(10) |>
   ggplot(aes(x = age_diff_avg, y = director)) +
   geom_col(width = 0.8, fill = "#8AA29E") +
   geom_vline(xintercept = avg_age_diff, colour = "#FF9E99", linewidth = 1.5) +
-  geom_text(aes(label = age_diff_avg, x = age_diff_avg + 0.3), hjust = 0,
-            colour = "white") +
-  geom_richtext(aes(x = avg_age_diff + 0.5, y = 12, 
-                    label = paste0("Avg age difference<br>", 
+  geom_text(aes(label = label, x = age_diff_avg + 0.3), 
+            hjust = 0, colour = "white", size = 5) +
+  geom_richtext(aes(x = avg_age_diff + 0.5, y = 12,
+                    label = paste0("Avg age difference<br>",
                                    round(avg_age_diff, digits = 1),
-                                   " y/o")), 
-                hjust = 0, vjust = 1.2, size = 3, label.colour = NA, 
-                colour = "white", fill = NA) +
-  labs(title = "Directors (>= 5 movies) who cast two actors with huge age gaps", 
-       x = NULL, y = NULL) +
-  theme(axis.text.x = element_blank())
+                                   " y/o")),
+                hjust = 0, vjust = 1.2, size = 5, label.colour = NA,
+                colour = "white", fill = NA, lineheight = .7) +
+  labs(title = "Directors (>= 5 movies) who cast two actors with huge age gaps",
+       x = NULL, y = NULL)
 p2
 
 # movies with the widest couple's age gap
-p3 <- age_gaps_long |> 
+p3 <- age_gaps_long |>
   mutate(movie = paste0("**", movie_name, "**<br>(", release_year, ")"),
-         movie = forcats::fct_reorder(movie, age_difference)) |> 
-  arrange(desc(age_difference)) |> 
-  head(10 * 2) |> 
+         movie = forcats::fct_reorder(movie, age_difference)) |>
+  arrange(desc(age_difference)) |>
+  head(10 * 2) |>
   ggplot(aes(x = age, y = movie, group = ID)) +
-  geom_vline(xintercept = avg_age_man, linewidth = 3, alpha = 0.6, 
+  geom_vline(xintercept = avg_age_man, linewidth = 3, alpha = 0.6,
              colour = "#E5B19E") +
   geom_vline(xintercept = avg_age_woman, linewidth = 3, alpha = 0.6,
              colour = "#FFE699") +
   geom_line(linewidth = 1.2, colour = "#FF9E99") +
   geom_point(aes(colour = gender, shape = gender), size = 5, fill = "white",
              stroke = 3) +
-  geom_text(aes(label = age), size = 3, fontface = "bold") +
-  geom_richtext(aes(x = avg_age_man + 0.5, 
-                    y = 11.5, 
-                    label = paste0("Avg Man<br>", 
-                                   round(avg_age_man, digits = 1),
-                                   " y/o")), 
-                hjust = 0, vjust = 1.2, size = 3, label.colour = NA, 
-                colour = "white", fill = NA) +
-  geom_richtext(aes(x = avg_age_woman + 0.5, 
-                    y = 11.5, 
-                    label = paste0("Avg Woman<br>", 
-                                   round(avg_age_woman, digits = 1),
-                                   " y/o")), 
-                hjust = 0, vjust = 1.2, size = 3, label.colour = NA, 
-                colour = "white", fill = NA) +
+  geom_text(aes(label = age), size = 5, fontface = "bold") +
+  geom_richtext(aes(x = avg_age_man + 0.5,
+                    y = 11.5,
+                    label = paste0("Avg Man<br>",
+                                   round(avg_age_man),
+                                   " y/o")),
+                hjust = 0, vjust = 1.2, size = 5, label.colour = NA,
+                colour = "white", fill = NA, lineheight = .7) +
+  geom_richtext(aes(x = avg_age_woman + 0.5,
+                    y = 11.5,
+                    label = paste0("Avg Woman<br>",
+                                   round(avg_age_woman),
+                                   " y/o")),
+                hjust = 0, vjust = 1.2, size = 5, label.colour = NA,
+                colour = "white", fill = NA, lineheight = .7) +
   scale_colour_manual(values = c("#E5B19E", "#FFE699")) +
   scale_shape_manual(values = c(21, 22)) +
+  scale_x_continuous(limits = c(0, NA), breaks = seq(0, 80, 10)) +
   labs(title = "Movies with the biggest age gaps between couple casts",
        colour = "Gender",
        shape = "Gender",
-       x = NULL, y = NULL) +
-  theme(axis.text.x = element_blank())
+       x = NULL, y = NULL)
 p3
 
 # combining all plots
@@ -228,22 +229,22 @@ p_final <- (p1 + (p2 / p3)) +
       "The holywood age gaps dataset contain information regarding the gaps",
       "between two actors played as couple in the film. Generally, there is\n",
       "a decreasing trend for the age gaps throughout the year. The director ",
-      "Joel Coen is the top directors (with >= 5 available observations)\n",
+      "Alfred Hitchcock is the top directors (with >= 5 available observations)\n",
       "who casts actors with the highest of average age gaps as a couple.",
       "Harold and Maude (1971) is the movie with the widest age difference\n",
       "between actors playing the couple roles with 52 years difference."
     ),
-    caption = "Source: {Holywood Age Gap, Data is Plural}",
-    theme = theme(plot.title = element_text(),
-                  plot.subtitle = element_text(colour = "white"),
-                  plot.caption = element_text(colour = "white"))
+    caption = "Source: {Holywood Age Gap, Data is Plural}"
   ) +
   plot_layout(guides = "collect") &
+  theme_minimal(20) &
   theme(
     plot.title.position = "plot",
-    plot.title = element_markdown(colour = "white"),
+    plot.title = element_markdown(colour = "white", size = 24),
+    plot.subtitle = element_text(colour = "white", lineheight = .5),
+    plot.caption = element_text(colour = "white"),
     plot.background = element_rect(colour = NA, fill = "#040F0F"),
-    axis.text.y = element_markdown(colour = "white"),
+    axis.text.y = element_markdown(colour = "white", lineheight = .5),
     axis.text.x = element_markdown(colour = "white"),
     panel.grid = element_blank(),
     legend.position = "bottom",
